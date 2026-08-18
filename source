@@ -93283,11 +93283,21 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
     <ol>
      <li><p>Set <var>element</var>'s <span>previously focused element</span> to null.</p></li>
 
-     <li><p>If <var>focusPreviousElement</var> is true and <var>document</var>'s <span>focused area
-     of the document</span>'s <span>DOM anchor</span> is a <span>shadow-including inclusive
-     descendant</span> of <var>element</var>, then run the <span>focusing steps</span> for
-     <var>previouslyFocusedElement</var>; the viewport should not be scrolled by doing this
-     step.</p></li>
+     <li>
+      <p>If <var>focusPreviousElement</var> is true and <var>document</var>'s <span>focused area
+      of the document</span>'s <span>DOM anchor</span> is a <span>shadow-including inclusive
+      descendant</span> of <var>element</var>, then:</p>
+
+      <ol>
+       <li><p>If the result of running <var>previouslyFocusedElement</var>'s <span data-x="get the
+       attr-associated element">get the <code data-x="">interestfor</code>-associated element</span>
+       is <var>element</var>, then set <var>previouslyFocusedElement</var>'s <span>suppress next
+       focus interest</span> to true.</p></li>
+
+       <li><p>Run the <span>focusing steps</span> for <var>previouslyFocusedElement</var>; the
+       viewport should not be scrolled by doing this step.</p></li>
+      </ol>
+     </li>
     </ol>
    </li>
 
@@ -94032,50 +94042,93 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
   following steps. They return an <span data-x="HTML elements">HTML element</span> or null.</p>
 
   <ol>
-   <li><p>If <var>node</var> is not a <code>button</code> element, then return <var>node</var>'s
-   <span>popover target element</span>.</p></li>
-
-   <li><p>If <var>node</var> is <span data-x="concept-fe-disabled">disabled</span>, then return
-   null.</p></li>
-
-   <li><p>Let <var>target</var> be the result of running <var>node</var>'s <span data-x="get the
-   attr-associated element">get the <code data-x="">commandfor</code>-associated
-   element</span>.</p></li>
-
-   <li><p>If <var>target</var> is null, then return <var>node</var>'s <span>popover target
-   element</span>.</p></li>
-
    <li>
-    <p>If <var>node</var> has a <span>form owner</span>:</p>
+    <p>If <var>node</var> is a <code>button</code> element:</p>
 
     <ol>
-     <li><p>If <var>element</var> is a <span data-x="concept-submit-button">submit button</span>,
-     then return null.</p></li>
-
-     <li><p>If <var>element</var>'s <code data-x="attr-button-type">type</code> attribute is in the
-     <span data-x="attr-button-type-reset-state">Reset Button</span> state, then return
+     <li><p>If <var>node</var> is <span data-x="concept-fe-disabled">disabled</span>, then return
      null.</p></li>
 
-     <li><p>If <var>element</var>'s <code data-x="attr-button-type">type</code> attribute is in the
-     <span data-x="attr-button-type-auto-state">Auto</span> state, then return null.</p></li>
-     <!-- We do this for compatability and plan to remove this restriction in future, see
-          https://github.com/whatwg/html/issues/10832 -->
+     <li><p>Let <var>commandTarget</var> be the result of running <var>node</var>'s <span data-x="get
+     the attr-associated element">get the <code data-x="">commandfor</code>-associated
+     element</span>.</p></li>
+
+     <li>
+      <p>If <var>commandTarget</var> is not null:</p>
+
+      <ol>
+       <li>
+        <p>If <var>node</var> has a <span>form owner</span>:</p>
+
+        <ol>
+         <li><p>If <var>node</var> is a <span data-x="concept-submit-button">submit button</span>,
+         then return null.</p></li>
+
+         <li><p>If <var>node</var>'s <code data-x="attr-button-type">type</code> attribute is in the
+         <span data-x="attr-button-type-reset-state">Reset Button</span> state, then return
+         null.</p></li>
+
+         <li><p>If <var>node</var>'s <code data-x="attr-button-type">type</code> attribute is in the
+         <span data-x="attr-button-type-auto-state">Auto</span> state, then return null.</p></li>
+         <!-- We do this for compatability and plan to remove this restriction in future, see
+              https://github.com/whatwg/html/issues/10832 -->
+        </ol>
+       </li>
+
+       <li><p>Let <var>command</var> be <var>node</var>'s <code
+       data-x="attr-button-command">command</code> attribute.</p></li>
+
+       <li><p>If <var>command</var> is not in the <span
+       data-x="attr-button-command-toggle-popover-state">Toggle Popover</span>, <span
+       data-x="attr-button-command-hide-popover-state">Hide Popover</span>, or <span
+       data-x="attr-button-command-show-popover-state">Show Popover</span> states, then return
+       null.</p></li>
+
+       <li><p>If <var>commandTarget</var>'s <code data-x="attr-popover">popover</code> attribute is
+       in the <span data-x="attr-popover-none-state">No Popover</span> state, then return
+       null.</p></li>
+
+       <li><p>Return <var>commandTarget</var>.</p></li>
+      </ol>
+     </li>
+
+     <li><p>If <var>node</var>'s <span>popover target element</span> is not null, then return
+     <var>node</var>'s <span>popover target element</span>.</p></li>
+
+     <li><p>Let <var>interestTarget</var> be the result of running <var>node</var>'s <span
+     data-x="get the attr-associated element">get the <code
+     data-x="">interestfor</code>-associated element</span>.</p></li>
+
+     <li><p>If <var>interestTarget</var> is an <span data-x="HTML elements">HTML element</span> and
+     <var>interestTarget</var>'s <code data-x="attr-popover">popover</code> attribute is not in the
+     <span data-x="attr-popover-none-state">No Popover</span> state, then return
+     <var>interestTarget</var>.</p></li>
+
+     <li><p>Return null.</p></li>
     </ol>
    </li>
 
-   <li><p>Let <var>command</var> be <var>node</var>'s <code
-   data-x="attr-button-command">command</code> attribute.</p></li>
+   <li>
+    <p>If <var>node</var> is an <code>a</code> or <code>area</code> element:</p>
 
-   <li><p>If <var>command</var> is not in the <span
-   data-x="attr-button-command-toggle-popover-state">Toggle Popover</span>, <span
-   data-x="attr-button-command-hide-popover-state">Hide Popover</span>, or <span
-   data-x="attr-button-command-show-popover-state">Show Popover</span> states, then return
-   null.</p></li>
+    <ol>
+     <li><p>If <var>node</var> does not have an <code data-x="attr-hyperlink-href">href</code>
+     attribute, then return null.</p></li>
 
-   <li><p>If <var>target</var>'s <code data-x="attr-popover">popover</code> attribute is in the
-   <span data-x="attr-popover-none-state">No Popover</span> state, then return null.</p></li>
+     <li><p>Let <var>interestTarget</var> be the result of running <var>node</var>'s <span
+     data-x="get the attr-associated element">get the <code
+     data-x="">interestfor</code>-associated element</span>.</p></li>
 
-   <li><p>Return <var>target</var>.</p></li>
+     <li><p>If <var>interestTarget</var> is an <span data-x="HTML elements">HTML element</span> and
+     <var>interestTarget</var>'s <code data-x="attr-popover">popover</code> attribute is not in the
+     <span data-x="attr-popover-none-state">No Popover</span> state, then return
+     <var>interestTarget</var>.</p></li>
+
+     <li><p>Return null.</p></li>
+    </ol>
+   </li>
+
+   <li><p>Return <var>node</var>'s <span>popover target element</span>.</p></li>
   </ol>
   </div>
 
@@ -94133,6 +94186,9 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
 
   <p class="note">These handles are used to abort steps that run after a timeout, effectively
   canceling the tasks.</p>
+
+  <p>Every <span data-x="HTML elements">HTML element</span> has a boolean <dfn>suppress next focus
+  interest</dfn>, initially false.</p>
 
   <p>Every element has an element-or-null <dfn>active interest source</dfn>, initially null.</p>
 
