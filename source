@@ -81308,14 +81308,16 @@ Demos:
     state</span> is <span data-x="popover-showing-state">showing</span>.</p>
    </dd>
 
-   <dt><dfn selector noexport><code data-x="selector-interest-source">:interest-source</code></dfn></dt>
+   <dt><dfn selector noexport><code
+   data-x="selector-interest-source">:interest-source</code></dfn></dt>
    <dd>
     <p>The <code data-x="selector-interest-source">:interest-source</code> <span>pseudo-class</span>
     must match any <span data-x="html elements">HTML element</span> whose <span>active interest
     target</span> is non-null.</p>
    </dd>
 
-   <dt><dfn selector noexport><code data-x="selector-interest-target">:interest-target</code></dfn></dt>
+   <dt><dfn selector noexport><code
+   data-x="selector-interest-target">:interest-target</code></dfn></dt>
    <dd>
     <p>The <code data-x="selector-interest-target">:interest-target</code> <span>pseudo-class</span>
     must match any element whose <span>active interest source</span> is non-null.</p>
@@ -94235,107 +94237,194 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
   <ol>
    <li>
-    <p>If <var>show</var> is true:</p>
+    <p>For each element <var>candidate</var> of <var>element</var>'s <span>inclusive
+    ancestors</span> in the <span>flat tree</span>:</p>
 
     <ol>
      <li>
-      <p>For each element <var>upstream</var> of <var>element</var>'s <span>recursive active
-      interest sources</span>:</p>
+      <p>If <var>show</var> is true:</p>
 
       <ol>
        <li>
-        <p>Set <var>upstream</var>'s <span>pending lose interest handle</span> to null.</p>
+        <p>For each element <var>upstream</var> of <var>candidate</var>'s <span>recursive active
+        interest sources</span>:</p>
 
-        <p class="note">This effectively cancels any pending task to <span>lose interest</span> for
-        <var>upstream</var>. User interactions such as hovering or focusing an interest target or
-        its descendants prevent those tasks for running, so that interest isn't lost while the user
-        is interacting with the target.</p>
+        <ol>
+         <li>
+          <p>Set <var>upstream</var>'s <span>pending lose interest handle</span> to null.</p>
+
+          <p class="note">This effectively cancels any pending task to <span>lose interest</span>
+          for <var>upstream</var>. User interactions such as hovering or focusing an interest target
+          or its descendants prevent those tasks from running, so that interest isn't lost while the
+          user is interacting with the target.</p>
+         </li>
+        </ol>
+       </li>
+
+       <li>
+        <p>If <var>candidate</var> is an <span data-x="HTML elements">HTML element</span>:</p>
+
+        <ol>
+         <li><p>Set <var>candidate</var>'s <span>pending lose interest handle</span> to
+         null.</p></li>
+
+         <li><p>Let <var>suppressFocusInterest</var> be <var>candidate</var>'s <span>suppress next
+         focus interest</span>.</p></li>
+
+         <li><p>Set <var>candidate</var>'s <span>suppress next focus interest</span> to
+         false.</p></li>
+
+         <li><p>If <var>suppressFocusInterest</var> is true, then continue.</p></li>
+
+         <li><p>If <var>candidate</var>'s <span>active interest target</span> is not null, then
+         continue.</p></li>
+        </ol>
+       </li>
+
+       <li><p>If <var>candidate</var> is not an <code>a</code> or <code>area</code> element with an
+       <code data-x="attr-hyperlink-href">href</code> attribute, nor a <code>button</code> element
+       that is not <span data-x="concept-element-disabled">actually disabled</span>, then
+       continue.</p></li>
+
+       <li><p>Let <var>target</var> be the result of running <var>candidate</var>'s <span
+       data-x="get the attr-associated element">get the <code
+       data-x="">interestfor</code>-associated element</span>.</p></li>
+
+       <li><p>If <var>target</var> is null, then continue.</p></li>
+
+       <li><p>Let <var>delay</var> be 500 if the <span>computed value</span> of
+       <span>'interest-delay-start'</span> on <var>candidate</var> is `<code
+       data-x="">normal</code>`; otherwise the <span>computed value</span> of
+       <span>'interest-delay-start'</span> on <var>candidate</var>, interpreted as a number of
+       milliseconds.</p></li>
+
+       <li><p>If <var>delay</var> is negative, infinite, or NaN, then continue.</p></li>
+
+       <li><p>Set <var>candidate</var>'s <span>pending gain interest handle</span> to null.</p></li>
+
+       <li><p>Let <var>uniqueHandle</var> be null.</p></li>
+
+       <li>
+        <p>Let <var>task</var> be a <span data-x="concept-task">task</span> that runs the following
+        substeps:</p>
+
+        <ol>
+         <li><p><span>Assert</span>: <var>uniqueHandle</var> is a <span>unique internal value</span>,
+         not null.</p></li>
+
+         <li><p>If <var>uniqueHandle</var> is not <var>candidate</var>'s <span>pending gain interest
+         handle</span>, then abort these steps.</p></li>
+
+         <li><p>Set <var>candidate</var>'s <span>pending gain interest handle</span> to
+         null.</p></li>
+
+         <li><p>If the <span>interest ready check</span> for <var>candidate</var> and
+         <var>target</var> returns false, then abort these steps.</p></li>
+
+         <li><p><span>Gain interest</span> in <var>candidate</var> given <var>target</var>.</p></li>
+        </ol>
+       </li>
+
+       <li><p>Let <var>global</var> be <var>candidate</var>'s <span>relevant global
+       object</span>.</p></li>
+
+       <li><p>Let <var>completionStep</var> be an algorithm step which <span data-x="queue a global
+       task">queues a global task</span> on the <span>timer task source</span> given
+       <var>global</var> to run <var>task</var>.</p></li>
+
+       <li><p>Set <var>uniqueHandle</var> to the result of <span data-x="run steps after a
+       timeout">running steps after a timeout</span> given <var>global</var>, "<code
+       data-x="">interest change</code>", <var>delay</var>, and
+       <var>completionStep</var>.</p></li>
+
+       <li><p>Set <var>candidate</var>'s <span>pending gain interest handle</span> to
+       <var>uniqueHandle</var>.</p></li>
+      </ol>
+     </li>
+
+     <li>
+      <p>Otherwise (when <var>show</var> is false):</p>
+
+      <ol>
+       <li>
+        <p>If <var>candidate</var> is an <span data-x="HTML elements">HTML element</span>:</p>
+
+        <ol>
+         <li><p>Set <var>candidate</var>'s <span>pending gain interest handle</span> to
+         null.</p></li>
+
+         <li><p>If <var>candidate</var>'s <span>active interest target</span> is not null, then
+         <span>schedule losing interest</span> for <var>candidate</var>.</p></li>
+        </ol>
+       </li>
+
+       <li>
+        <p>For each element <var>upstream</var> of <var>candidate</var>'s <span>recursive active
+        interest sources</span>:</p>
+
+        <ol>
+         <li><p><span>Schedule losing interest</span> for <var>upstream</var>.</p></li>
+        </ol>
        </li>
       </ol>
      </li>
     </ol>
    </li>
+  </ol>
+  </div>
 
-   <li><p>If <var>element</var> is not an <code>a</code>, <code>area</code>, or <code>button</code>
-   element, then return.</p></li>
+  <div algorithm>
+  <p>To <dfn>schedule losing interest</dfn> for an <span data-x="HTML elements">HTML element</span>
+  <var>source</var>:</p>
 
-   <li><p>Let <var>target</var> be the result of running <var>element</var>'s <span data-x="get
-   the attr-associated element">get the <code data-x="">interestfor</code>-associated
-   element</span>.</p></li>
+  <ol>
+   <li><p>Let <var>target</var> be <var>source</var>'s <span>active interest target</span>.</p></li>
 
    <li><p>If <var>target</var> is null, then return.</p></li>
 
-   <li><p>Let <var>global</var> be <var>element</var>'s <span>relevant global
-   object</span>.</p></li>
-
-   <li><p>Let <var>delayProperty</var> be <span>'interest-delay-start'</span> if <var>show</var> is
-   true; otherwise <span>'interest-delay-end'</span>.</p></li>
-
-   <li><p>Let <var>delay</var> be the <span>computed value</span> of <var>delayProperty</var> on
-   <var>element</var>, interpreted as a number of milliseconds.</p></li>
+   <li><p>Let <var>delay</var> be 250 if the <span>computed value</span> of
+   <span>'interest-delay-end'</span> on <var>source</var> is `<code data-x="">normal</code>`;
+   otherwise the <span>computed value</span> of <span>'interest-delay-end'</span> on
+   <var>source</var>, interpreted as a number of milliseconds.</p></li>
 
    <li><p>If <var>delay</var> is negative, infinite, or NaN, then return.</p></li>
 
+   <li><p>Set <var>source</var>'s <span>pending lose interest handle</span> to null.</p></li>
+
    <li><p>Let <var>uniqueHandle</var> be null.</p></li>
 
-   <li><p>Let <var>task</var> be null.</p></li>
-
    <li>
-    <p>If <var>show</var> is true, set <var>task</var> to a <span data-x="concept-task">task</span> that runs the following
+    <p>Let <var>task</var> be a <span data-x="concept-task">task</span> that runs the following
     substeps:</p>
 
     <ol>
      <li><p><span>Assert</span>: <var>uniqueHandle</var> is a <span>unique internal value</span>,
      not null.</p></li>
 
-     <li><p>If <var>uniqueHandle</var> is not <var>element</var>'s <span>pending gain interest
+     <li><p>If <var>uniqueHandle</var> is not <var>source</var>'s <span>pending lose interest
      handle</span>, then abort these steps.</p></li>
 
-     <li><p>Set <var>element</var>'s <span>pending gain interest handle</span> to null.</p></li>
+     <li><p>Set <var>source</var>'s <span>pending lose interest handle</span> to null.</p></li>
 
-     <li><p>If the <span>interest ready check</span> for <var>element</var> and <var>target</var>
+     <li><p>If the <span>interest ready check</span> for <var>source</var> and <var>target</var>
      returns false, then abort these steps.</p></li>
 
-     <li><p><span>Gain interest</span> in <var>element</var> given <var>target</var>.</p></li>
+     <li><p><span>Lose interest</span> in <var>source</var> given <var>target</var>.</p></li>
     </ol>
    </li>
 
-   <li>
-    <p>Otherwise, set <var>task</var> to a <span data-x="concept-task">task</span> that runs the following
-    substeps:</p>
-
-    <ol>
-     <li><p><span>Assert</span>: <var>uniqueHandle</var> is a <span>unique internal value</span>,
-     not null.</p></li>
-
-     <li><p>If <var>uniqueHandle</var> is not <var>element</var>'s <span>pending lose interest
-     handle</span>, then abort these steps.</p></li>
-
-     <li><p>Set <var>element</var>'s <span>pending lose interest handle</span> to null.</p></li>
-
-     <li><p>If the <span>interest ready check</span> for <var>element</var> and <var>target</var>
-     returns false, then abort these steps.</p></li>
-
-     <li><p><span>Lose interest</span> in <var>element</var> given <var>target</var>.</p></li>
-    </ol>
-   </li>
-
-   <li><p><span>Assert</span>: <var>task</var> is a <span
-   data-x="concept-task">task</span>.</p></li>
+   <li><p>Let <var>global</var> be <var>source</var>'s <span>relevant global object</span>.</p></li>
 
    <li><p>Let <var>completionStep</var> be an algorithm step which <span data-x="queue a global
-   task">queues a global task</span> on the <span>timer task source</span> given
-   <var>global</var> to run <var>task</var>.</p></li>
+   task">queues a global task</span> on the <span>timer task source</span> given <var>global</var>
+   to run <var>task</var>.</p></li>
 
    <li><p>Set <var>uniqueHandle</var> to the result of <span data-x="run steps after a
    timeout">running steps after a timeout</span> given <var>global</var>, "<code
    data-x="">interest change</code>", <var>delay</var>, and
    <var>completionStep</var>.</p></li>
 
-   <li><p>If <var>show</var> is true, set <var>element</var>'s <span>pending gain interest
-   handle</span> to <var>uniqueHandle</var>.</p></li>
-
-   <li><p>Otherwise, set <var>element</var>'s <span>pending lose interest handle</span> to
+   <li><p>Set <var>source</var>'s <span>pending lose interest handle</span> to
    <var>uniqueHandle</var>.</p></li>
   </ol>
   </div>
@@ -94400,6 +94489,10 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
   and false otherwise:</p>
 
   <ul>
+   <li><p><var>source</var> is an <code>a</code> or <code>area</code> element with an <code
+   data-x="attr-hyperlink-href">href</code> attribute, or a <code>button</code> element that is not
+   <span data-x="concept-element-disabled">actually disabled</span>.</p></li>
+
    <li><p><var>source</var> is <span>connected</span>.</p></li>
 
    <li><p><var>source</var>'s <span>node document</span> is <span>fully active</span>.</p></li>
@@ -94489,7 +94582,8 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
    <li><p>Set <var>target</var>'s <span>active interest source</span> to <var>source</var>.</p></li>
 
-   <li><p>If <var>target</var>'s <span>popover visibility state</span> is <span
+   <li><p>If <var>target</var> is an <span data-x="HTML elements">HTML element</span> and
+   <var>target</var>'s <span>popover visibility state</span> is <span
    data-x="popover-hidden-state">hidden</span>, then run <span>show popover</span> given
    <var>target</var>, false, and <var>source</var>.</p></li>
   </ol>
@@ -94520,7 +94614,8 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
    <li><p><span>Reset interest state</span> for <var>source</var>.</p></li>
 
-   <li><p>If <var>target</var>'s <span>popover visibility state</span> is <span
+   <li><p>If <var>target</var> is an <span data-x="HTML elements">HTML element</span> and
+   <var>target</var>'s <span>popover visibility state</span> is <span
    data-x="popover-showing-state">showing</span>, then run the <span>hide popover algorithm</span>
    given <var>target</var>, true, true, false, and <var>source</var>.</p></li>
 
@@ -94626,10 +94721,13 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
    <li><p>Let <var>showContextMenu</var> be true if <var>event</var> is not null and its
    <span>canceled flag</span> is not set.</p></li>
 
-   <li><p>If <var>element</var> is not an <code>a</code>, <code>area</code>, or <code>button</code>
-   element, then abort these steps.</p></li>
+   <li><p>Let <var>invoker</var> be the closest <span data-x="shadow-including inclusive
+   ancestor">shadow-including inclusive ancestor</span> of <var>element</var> that is an
+   <code>a</code>, <code>area</code>, or <code>button</code> element.</p></li>
 
-   <li><p>Let <var>target</var> be the result of running <var>element</var>'s <span
+   <li><p>If <var>invoker</var> is null, then abort these steps.</p></li>
+
+   <li><p>Let <var>target</var> be the result of running <var>invoker</var>'s <span
    data-x="get the attr-associated element">get the <code data-x="">interestfor</code>-associated
    element</span>.</p></li>
 
@@ -94639,8 +94737,8 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
     <p>Let <var>gainInterestIfReady</var> be the following step:</p>
 
     <ol>
-     <li><p>If the <span>interest ready check</span> for <var>element</var> and <var>target</var>
-     returns true, then <span>gain interest</span> in <var>element</var> given
+     <li><p>If the <span>interest ready check</span> for <var>invoker</var> and <var>target</var>
+     returns true, then <span>gain interest</span> in <var>invoker</var> given
      <var>target</var>.</p></li>
     </ol>
    </li>
