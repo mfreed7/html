@@ -94237,8 +94237,9 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
   <ol>
    <li>
-    <p>For each element <var>candidate</var> of <var>element</var>'s <span>inclusive
-    ancestors</span> in the <span>flat tree</span>:</p>
+    <p>For each element <var>candidate</var> of <var>element</var>'s <span
+    data-x="inclusive ancestor">inclusive ancestors</span> in the <span>flat
+    tree</span>:</p>
 
     <ol>
      <li>
