@@ -87444,8 +87444,8 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
         event is fired.</p>
        </li>
 
-       <li><p><span>Handle interest change</span> for <var>blur event target</var> and
-       false.</p></li>
+       <li><p>If <var>blur event target</var> is an element, then <span>handle interest
+       change</span> for <var>blur event target</var> and false.</p></li>
       </ol>
      </li>
     </ol>
@@ -87502,8 +87502,8 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
         element's shape, a scrollable region, or a <span>viewport</span>, no event is fired.</p>
        </li>
 
-       <li><p><span>Handle interest change</span> for <var>focus event target</var> and
-       true.</p></li>
+       <li><p>If <var>focus event target</var> is an element, then <span>handle interest
+       change</span> for <var>focus event target</var> and true.</p></li>
       </ol>
      </li>
     </ol>
