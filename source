@@ -94379,11 +94379,15 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
        <li><p>If <var>target</var> is null, then continue.</p></li>
 
-       <li><p>Let <var>delay</var> be 500 if the <span>computed value</span> of
-       <span>'interest-delay-start'</span> on <var>candidate</var> is `<code
-       data-x="">normal</code>`; otherwise the <span>computed value</span> of
-       <span>'interest-delay-start'</span> on <var>candidate</var>, interpreted as a number of
-       milliseconds.</p></li>
+       <li>
+        <p>If the <span>computed value</span> of <span>'interest-delay-start'</span> on
+        <var>candidate</var> is 'normal', then let <var>delay</var> be an
+        <span>implementation-defined</span> number of milliseconds. Otherwise, let
+        <var>delay</var> be the <span>computed value</span> of <span>'interest-delay-start'</span>
+        on <var>candidate</var>, interpreted as a number of milliseconds.</p>
+
+        <p class="note">A typical value for the 'normal' delay is 250 milliseconds.</p>
+       </li>
 
        <li><p>If <var>delay</var> is negative, infinite, or NaN, then continue.</p></li>
 
@@ -94470,10 +94474,15 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
    <li><p>If <var>target</var> is null, then return.</p></li>
 
-   <li><p>Let <var>delay</var> be 250 if the <span>computed value</span> of
-   <span>'interest-delay-end'</span> on <var>source</var> is `<code data-x="">normal</code>`;
-   otherwise the <span>computed value</span> of <span>'interest-delay-end'</span> on
-   <var>source</var>, interpreted as a number of milliseconds.</p></li>
+   <li>
+    <p>If the <span>computed value</span> of <span>'interest-delay-end'</span> on
+    <var>source</var> is 'normal', then let <var>delay</var> be an
+    <span>implementation-defined</span> number of milliseconds. Otherwise, let <var>delay</var>
+    be the <span>computed value</span> of <span>'interest-delay-end'</span> on
+    <var>source</var>, interpreted as a number of milliseconds.</p>
+
+    <p class="note">A typical value for the 'normal' delay is 150 milliseconds.</p>
+   </li>
 
    <li><p>If <var>delay</var> is negative, infinite, or NaN, then return.</p></li>
 
