@@ -57246,6 +57246,17 @@ interface <dfn interface>HTMLButtonElement</dfn> : <span>HTMLElement</span> {
 
        <li><p>If <var>validity</var> is true, then run the <span data-x="show popover">show popover
        algorithm</span> given <var>target</var>, false, and <var>element</var>.</p></li>
+
+       <li>
+        <p>Otherwise, if <var>target</var>'s <span>popover visibility state</span> is <span
+        data-x="popover-showing-state">showing</span>:</p>
+
+        <ol>
+         <li><p>Set <var>target</var>'s <span>popover trigger</span> to <var>element</var>.</p></li>
+
+         <li><p>Set <var>target</var>'s <span>popover shown via interest</span> to false.</p></li>
+        </ol>
+       </li>
       </ol>
      </li>
 
@@ -87444,8 +87455,9 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
         event is fired.</p>
        </li>
 
-       <li><p>If <var>blur event target</var> is an element, then <span>handle interest
-       change</span> for <var>blur event target</var> and false.</p></li>
+       <li><p>If <var>blur event target</var> is an element, and this focus change was not initiated
+       by touch input, then <span>handle interest change</span> for <var>blur event target</var>,
+       false, and true.</p></li>
       </ol>
      </li>
     </ol>
@@ -87502,8 +87514,9 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
         element's shape, a scrollable region, or a <span>viewport</span>, no event is fired.</p>
        </li>
 
-       <li><p>If <var>focus event target</var> is an element, then <span>handle interest
-       change</span> for <var>focus event target</var> and true.</p></li>
+       <li><p>If <var>focus event target</var> is an element, and this focus change was not
+       initiated by touch input, then <span>handle interest change</span> for <var>focus event
+       target</var>, true, and true.</p></li>
       </ol>
      </li>
     </ol>
@@ -89793,10 +89806,19 @@ body { display:none }
    </li>
 
    <li>
-    <p>For each element <var>source</var> of <var>document</var>'s <span>active interest sources
-    set</span>, in reverse order:</p>
+    <p>For each element <var>source</var> of a <span data-x="list clone">clone</span> of
+    <var>document</var>'s <span>active interest sources set</span>, in reverse order:</p>
 
     <ol>
+     <li>
+      <p>If <var>source</var>'s <span>active interest target</span> is null, or the <span>interest
+      ready check</span> for <var>source</var> and <var>source</var>'s <span>active interest
+      target</span> returns false, then continue.</p>
+
+      <p class="note">An earlier iteration's event listeners might have already reset
+      <var>source</var>'s interest state, or changed its target.</p>
+     </li>
+
      <li><p><span>Lose interest</span> in <var>source</var> given <var>source</var>'s <span>active
      interest target</span> and false.</p></li>
 
@@ -92710,6 +92732,13 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
   <p>Every <span data-x="HTML elements">HTML element</span> has a <dfn>popover trigger</dfn>, which
   is an <span data-x="HTML elements">HTML element</span> or null, initially set to null.</p>
 
+  <p>Every <span data-x="HTML elements">HTML element</span> has a <dfn>popover shown via
+  interest</dfn>, which is a boolean, initially false.</p>
+
+  <p class="note">The <span>popover shown via interest</span> boolean is true when the popover was
+  shown by <span data-x="gain interest">gaining interest</span>. Only such popovers are hidden when
+  interest is <span data-x="lose interest">lost</span>.</p>
+
   <p>Every <span data-x="HTML elements">HTML element</span> has a <dfn>popover hiding</dfn>, which
   is a boolean, initially set to false.</p>
 
@@ -93039,6 +93068,8 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
 
    <li><p>Set <var>element</var>'s <span>popover trigger</span> to <var>source</var>.</p></li>
 
+   <li><p>Set <var>element</var>'s <span>popover shown via interest</span> to false.</p></li>
+
    <li><p>Set <var>element</var>'s <span>implicit anchor element</span> to
    <var>source</var>.</p></li>
 
@@ -93149,10 +93180,6 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
      <li><p>If <var>nestedHide</var> is false, then set <var>element</var>'s <span>popover
      hiding</span> to false.</p></li>
 
-     <li><p>If <var>element</var>'s <span>active interest source</span> is not null, then
-     <span>lose interest</span> in <var>element</var>'s <span>active interest source</span>
-     given <var>element</var>.</p></li>
-
      <li><p>Decrement <var>document</var>'s <span>hiding popover nesting count</span>.</p></li>
     </ol>
    </li>
@@ -93250,6 +93277,41 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
       </ol>
      </li>
 
+     <li>
+      <p>If <var>element</var>'s <span>active interest source</span> is not null, and the
+      <span>interest ready check</span> for <var>element</var>'s <span>active interest
+      source</span> and <var>element</var> returns true, then <span>lose interest</span> in
+      <var>element</var>'s <span>active interest source</span> given <var>element</var>, true, and
+      false.</p>
+
+      <p class="note">Hiding the target of an active interest invoker causes that invoker to lose
+      interest. The <span>lose interest</span> algorithm is told not to hide <var>element</var>,
+      since it is already being hidden.</p>
+     </li>
+
+     <li>
+      <p>Set <var>validityResult</var> to the result of running <span>check popover validity</span>
+      given <var>element</var>, true, and null. If this throws an exception, catch it, and set
+      <var>validityResult</var> to that exception.</p>
+
+      <p class="note"><span>Check popover validity</span> is called again because firing the <code
+      data-x="event-loseinterest">loseinterest</code> event could have disconnected
+      <var>element</var> or changed its <code data-x="attr-popover">popover</code> attribute.</p>
+     </li>
+
+     <li>
+      <p>If <var>validityResult</var> is not true:</p>
+
+      <ol>
+       <li><p>Run <var>cleanupSteps</var>.</p></li>
+
+       <li><p>If <var>throwExceptions</var> is true and <var>validityResult</var> is a
+       <code>DOMException</code>, then throw <var>validityResult</var>.</p></li>
+
+       <li><p>Return.</p></li>
+      </ol>
+     </li>
+
      <li><p><span>Request an element to be removed from the top layer</span> given
      <var>element</var>.</p></li>
 
@@ -93261,6 +93323,8 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
    <var>element</var>.</p></li>
 
    <li><p>Set <var>element</var>'s <span>popover trigger</span> to null.</p></li>
+
+   <li><p>Set <var>element</var>'s <span>popover shown via interest</span> to false.</p></li>
 
    <li><p>Set <var>element</var>'s <span>opened in popover mode</span> to null.</p></li>
 
@@ -93864,10 +93928,20 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
    <span data-x="shadow-including descendant">shadow-including descendant</span> of <var>node</var>,
    then return.</p></li>
 
-   <li><p>If <var>node</var>'s <code data-x="attr-popovertargetaction">popovertargetaction</code>
-   attribute is in the <span data-x="attr-popovertargetaction-show">show</span> state and
-   <var>popover</var>'s <span>popover visibility state</span> is <span
-   data-x="popover-showing-state">showing</span>, then return.</p></li>
+   <li>
+    <p>If <var>node</var>'s <code data-x="attr-popovertargetaction">popovertargetaction</code>
+    attribute is in the <span data-x="attr-popovertargetaction-show">show</span> state and
+    <var>popover</var>'s <span>popover visibility state</span> is <span
+    data-x="popover-showing-state">showing</span>:</p>
+
+    <ol>
+     <li><p>Set <var>popover</var>'s <span>popover trigger</span> to <var>node</var>.</p></li>
+
+     <li><p>Set <var>popover</var>'s <span>popover shown via interest</span> to false.</p></li>
+
+     <li><p>Return.</p></li>
+    </ol>
+   </li>
 
    <li><p>If <var>node</var>'s <code data-x="attr-popovertargetaction">popovertargetaction</code>
    attribute is in the <span data-x="attr-popovertargetaction-hide">hide</span> state and
@@ -94192,6 +94266,14 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
   <p>Every <span data-x="HTML elements">HTML element</span> has a boolean <dfn>suppress next focus
   interest</dfn>, initially false.</p>
 
+  <p>Every <span data-x="HTML elements">HTML element</span> has a boolean <dfn>explicit
+  interest</dfn>, initially false.</p>
+
+  <p class="note">An element has <span>explicit interest</span> when interest was gained through an
+  explicit user action, such as a long press on a touch device. Such interest is not lost when the
+  element stops being hovered or focused, since the element was not hovered or focused to gain
+  interest in the first place.</p>
+
   <p>Every element has an element-or-null <dfn>active interest source</dfn>, initially null.</p>
 
   <p class="note">When non-null, an element's <span>active interest target</span> is a cached result
@@ -94232,10 +94314,13 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
   <h4 id="interestfor-processing-model">Processing model</h4>
 
   <div algorithm>
-  <p>To <dfn>handle interest change</dfn> for an element <var>element</var> and a boolean
-  <var>show</var>:</p>
+  <p>To <dfn>handle interest change</dfn> for an element <var>element</var>, a boolean
+  <var>show</var>, and a boolean <var>viaFocus</var>:</p>
 
   <ol>
+   <li><p>If <var>element</var> is not <span>connected</span>, or <var>element</var>'s <span>node
+   document</span> is not <span>fully active</span>, then return.</p></li>
+
    <li>
     <p>For each element <var>candidate</var> of <var>element</var>'s <span
     data-x="inclusive ancestor">inclusive ancestors</span> in the <span>flat
@@ -94269,8 +94354,9 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
          <li><p>Set <var>candidate</var>'s <span>pending lose interest handle</span> to
          null.</p></li>
 
-         <li><p>Let <var>suppressFocusInterest</var> be <var>candidate</var>'s <span>suppress next
-         focus interest</span>.</p></li>
+         <li><p>Let <var>suppressFocusInterest</var> be true if <var>viaFocus</var> is true and
+         <var>candidate</var>'s <span>suppress next focus interest</span> is true; otherwise
+         false.</p></li>
 
          <li><p>Set <var>candidate</var>'s <span>suppress next focus interest</span> to
          false.</p></li>
@@ -94354,8 +94440,9 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
          <li><p>Set <var>candidate</var>'s <span>pending gain interest handle</span> to
          null.</p></li>
 
-         <li><p>If <var>candidate</var>'s <span>active interest target</span> is not null, then
-         <span>schedule losing interest</span> for <var>candidate</var>.</p></li>
+         <li><p>If <var>candidate</var>'s <span>active interest target</span> is not null and
+         <var>candidate</var>'s <span>explicit interest</span> is false, then <span>schedule losing
+         interest</span> for <var>candidate</var>.</p></li>
         </ol>
        </li>
 
@@ -94468,7 +94555,9 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
         </ol>
        </li>
 
-       <li><p>Set <var>current</var> to <var>current</var>'s <span>parent element</span>.</p></li>
+       <li><p>Set <var>current</var> to <var>current</var>'s parent node within the <span>flat
+       tree</span>, if that parent node is an element; otherwise, set <var>current</var> to
+       null.</p></li>
       </ol>
      </li>
     </ol>
@@ -94506,7 +94595,8 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
   <div algorithm>
   <p>To <dfn>gain interest</dfn> in an <span data-x="HTML elements">HTML element</span>
-  <var>source</var> given an element <var>target</var>:</p>
+  <var>source</var> given an element <var>target</var> and an optional boolean
+  <var>explicit</var> (default false):</p>
 
   <ol>
    <li><p><span>Assert</span>: <var>source</var> is an <code>a</code>, <code>area</code>, or
@@ -94521,11 +94611,20 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
     <ol>
      <li>
-      <p>If <var>source</var>'s <span>active interest target</span> is <var>target</var>, then set
-      <var>source</var>'s <span>pending lose interest handle</span> to null and return.</p>
+      <p>If <var>source</var>'s <span>active interest target</span> is <var>target</var>:</p>
+
+      <ol>
+       <li><p>Set <var>source</var>'s <span>pending lose interest handle</span> to null.</p></li>
+
+       <li><p>If <var>explicit</var> is true, then set <var>source</var>'s <span>explicit
+       interest</span> to true.</p></li>
+
+       <li><p>Return.</p></li>
+      </ol>
 
       <p class="note">Interest has already been gained for the correct target and there is nothing
-      to do except to cancel pending tasks.</p>
+      to do except to cancel pending tasks, and possibly upgrade to <span>explicit
+      interest</span>.</p>
      </li>
 
      <li>
@@ -94578,22 +94677,34 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
    <li><p>Set <var>source</var>'s <span>active interest target</span> to <var>target</var>.</p></li>
 
+   <li><p>Set <var>source</var>'s <span>explicit interest</span> to <var>explicit</var>.</p></li>
+
    <li><p><span data-x="list append">Append</span> <var>source</var> to <var>source</var>'s
    <span>node document</span>'s <span>active interest sources set</span>.</p></li>
 
    <li><p>Set <var>target</var>'s <span>active interest source</span> to <var>source</var>.</p></li>
 
-   <li><p>If <var>target</var> is an <span data-x="HTML elements">HTML element</span> and
-   <var>target</var>'s <span>popover visibility state</span> is <span
-   data-x="popover-hidden-state">hidden</span>, then run <span>show popover</span> given
-   <var>target</var>, false, and <var>source</var>.</p></li>
+   <li>
+    <p>If <var>target</var> is an <span data-x="HTML elements">HTML element</span> and
+    <var>target</var>'s <span>popover visibility state</span> is <span
+    data-x="popover-hidden-state">hidden</span>:</p>
+
+    <ol>
+     <li><p>Run <span>show popover</span> given <var>target</var>, false, and
+     <var>source</var>.</p></li>
+
+     <li><p>If <var>target</var>'s <span>popover visibility state</span> is <span
+     data-x="popover-showing-state">showing</span>, then set <var>target</var>'s <span>popover
+     shown via interest</span> to true.</p></li>
+    </ol>
+   </li>
   </ol>
   </div>
 
   <div algorithm>
   <p>To <dfn>lose interest</dfn> in an <span data-x="HTML elements">HTML element</span>
-  <var>source</var> given an element <var>target</var> and an optional boolean <var>cancelable</var>
-  (default true):</p>
+  <var>source</var> given an element <var>target</var>, an optional boolean <var>cancelable</var>
+  (default true), and an optional boolean <var>hidePopover</var> (default true):</p>
 
   <ol>
    <li><p><span>Assert</span>: <var>source</var> is an <code>a</code>, <code>area</code>, or
@@ -94615,10 +94726,11 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
    <li><p><span>Reset interest state</span> for <var>source</var>.</p></li>
 
-   <li><p>If <var>target</var> is an <span data-x="HTML elements">HTML element</span> and
-   <var>target</var>'s <span>popover visibility state</span> is <span
-   data-x="popover-showing-state">showing</span>, then run the <span>hide popover algorithm</span>
-   given <var>target</var>, true, true, false, and <var>source</var>.</p></li>
+   <li><p>If <var>hidePopover</var> is true, <var>target</var> is an <span data-x="HTML
+   elements">HTML element</span>, <var>target</var>'s <span>popover visibility state</span> is
+   <span data-x="popover-showing-state">showing</span>, and <var>target</var>'s <span>popover
+   shown via interest</span> is true, then run the <span>hide popover algorithm</span> given
+   <var>target</var>, true, true, false, and <var>source</var>.</p></li>
 
    <li><p>Return true.</p></li>
   </ol>
@@ -94633,6 +94745,8 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
    target</span>.</p></li>
 
    <li><p>Set <var>source</var>'s <span>active interest target</span> to null.</p></li>
+
+   <li><p>Set <var>source</var>'s <span>explicit interest</span> to false.</p></li>
 
    <li><p><span data-x="list remove">Remove</span> <var>source</var> from <var>source</var>'s
    <span>node document</span>'s <span>active interest sources set</span>.</p></li>
@@ -94686,16 +94800,16 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
   <div algorithm>
   <p>When the user <span data-x="concept-selector-hover">designates</span> an element
-  <var>element</var> with a pointing device, the user agent must <span>queue a task</span> on the
-  <span>user interaction task source</span> to <span>handle interest change</span> for
-  <var>element</var> and true.</p>
+  <var>element</var> with a pointing device, other than through touch input, the user agent must
+  <span>queue a task</span> on the <span>user interaction task source</span> to <span>handle
+  interest change</span> for <var>element</var>, true, and false.</p>
   </div>
 
   <div algorithm>
   <p>When the user no longer <span data-x="concept-selector-hover">designates</span> an element
-  <var>element</var> with a pointing device, the user agent must <span>queue a task</span> on the
-  <span>user interaction task source</span> to <span>handle interest change</span> for
-  <var>element</var> and false.</p>
+  <var>element</var> with a pointing device, other than through touch input, the user agent must
+  <span>queue a task</span> on the <span>user interaction task source</span> to <span>handle
+  interest change</span> for <var>element</var>, false, and false.</p>
   </div>
 
   <p>The tasks queued on the <span>user interaction task source</span> above must be queued after
@@ -94724,7 +94838,9 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
    <li><p>Let <var>invoker</var> be the closest <span data-x="shadow-including inclusive
    ancestor">shadow-including inclusive ancestor</span> of <var>element</var> that is an
-   <code>a</code>, <code>area</code>, or <code>button</code> element.</p></li>
+   <code>a</code>, <code>area</code>, or <code>button</code> element, and for which the result of
+   running its <span data-x="get the attr-associated element">get the <code
+   data-x="">interestfor</code>-associated element</span> is not null.</p></li>
 
    <li><p>If <var>invoker</var> is null, then abort these steps.</p></li>
 
@@ -94739,14 +94855,20 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
 
     <ol>
      <li><p>If the <span>interest ready check</span> for <var>invoker</var> and <var>target</var>
-     returns true, then <span>gain interest</span> in <var>invoker</var> given
-     <var>target</var>.</p></li>
+     returns true, then <span>gain interest</span> in <var>invoker</var> given <var>target</var>
+     and true.</p></li>
     </ol>
    </li>
 
-   <li><p>If <var>showContextMenu</var> is true, then provide an option in the context menu that,
-   when selected, <span data-x="queue a task">queues a task</span> on the <span>user interaction
-   task source</span> to run <var>gainInterestIfReady</var>.</p></li>
+   <li>
+    <p>If <var>showContextMenu</var> is true and <var>invoker</var> is not a <code>button</code>
+    element, then provide an option in the context menu that, when selected, <span data-x="queue a
+    task">queues a task</span> on the <span>user interaction task source</span> to run
+    <var>gainInterestIfReady</var>.</p>
+
+    <p class="note">For <code>button</code> elements, interest is gained immediately, rather than
+    through a context menu option.</p>
+   </li>
 
    <li>
     <p>Otherwise, run <var>gainInterestIfReady</var>.</p>
@@ -155220,6 +155342,15 @@ input[type=image i][align=bottom i], object[align=bottom i] {
   <p class="XXX">Need to define the <span>primitive appearance</span>.</p>
 
   <h4>The <code>button</code> element</h4>
+
+  <pre><code class="css">@namespace "http://www.w3.org/1999/xhtml";
+
+button[interestfor] {
+  user-select: none;
+}</code></pre>
+
+  <p class="note">This prevents a long press on a touch device from selecting the button's text, so
+  that the long press can instead be used to show interest.</p>
 
   <p>The <code>button</code> element, when it generates a <span>CSS box</span>, is
   <span>expected</span> to depict a button and to use <span>button layout</span>.</p>
