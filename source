@@ -93322,6 +93322,20 @@ dictionary <dfn dictionary>DragEventInit</dfn> : <span>MouseEventInit</span> {
    <li><p>Otherwise, <span>remove an element from the top layer immediately</span> given
    <var>element</var>.</p></li>
 
+   <li>
+    <p>If <var>element</var>'s <span>active interest source</span> is not null, and either
+    <var>fireEvents</var> is false or the <span>interest ready check</span> for
+    <var>element</var>'s <span>active interest source</span> and <var>element</var> returns false,
+    then <span>reset interest state</span> for <var>element</var>'s <span>active interest
+    source</span>.</p>
+
+    <p class="note">In these cases the <code data-x="event-loseinterest">loseinterest</code> event
+    was not fired above, so this step clears the interest state without firing an event. This
+    ensures that an interest invoker does not keep a hidden popover as its <span>active interest
+    target</span>. If the <code data-x="event-loseinterest">loseinterest</code> event was fired
+    and canceled, interest is maintained.</p>
+   </li>
+
    <li><p>Set <var>element</var>'s <span>popover trigger</span> to null.</p></li>
 
    <li><p>Set <var>element</var>'s <span>popover shown via interest</span> to false.</p></li>
