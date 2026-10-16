@@ -94904,9 +94904,10 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
   </div>
 
   <div algorithm>
-  <p>When the user clicks or taps an element <var>element</var>'s <span>'::interest-button'</span>
-  pseudo-element using a pointing device, the user agent must <span>queue a task</span> on the
-  <span>user interaction task source</span> to run the following steps:</p>
+  <p>When the user clicks, taps, or long presses an element <var>element</var>'s
+  <span>'::interest-button'</span> pseudo-element using a pointing or touch device, the user agent
+  must <span>queue a task</span> on the <span>user interaction task source</span> to run the
+  following steps:</p>
 
   <ol>
    <li><p>Fire any relevant events, per <cite>UI Events</cite> or other relevant specifications,
@@ -94916,8 +94917,8 @@ dictionary <dfn dictionary>InterestEventInit</dfn> : <span>EventInit</span> {
    <li><p>Let <var>event</var> be the <code>Event</code> object for any <code
    data-x="event-click">click</code> event fired, or null if no such event was fired.</p></li>
 
-   <li><p>If <var>event</var> is null or its <span>canceled flag</span> is set, then abort these
-   steps.</p></li>
+   <li><p>If <var>event</var> is not null and its <span>canceled flag</span> is set, then abort
+   these steps.</p></li>
 
    <li><p>Let <var>target</var> be the result of running <var>element</var>'s <span
    data-x="get the attr-associated element">get the <code data-x="">interestfor</code>-associated
